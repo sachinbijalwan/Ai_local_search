@@ -82,6 +82,20 @@ int i,j,k,l;
     }
   }
 }
+void shuffle(int *array, size_t n)
+{
+    if (n > 1)
+    {
+        size_t i;
+        for (i = 0; i < n - 1; i++)
+        {
+          size_t j = i + rand() / (RAND_MAX / (n - i) + 1);
+          int t = array[j];
+          array[j] = array[i];
+          array[i] = t;
+        }
+    }
+}
 ///////////////////////////////////////////////////////////////////////////////
 //Restart Hill Climbing functions
 //
@@ -147,13 +161,19 @@ int is_valid_state_space(int ** range,int r1,int c1,int ** block,int r2,int no_o
 void find_successor(int ** range,int r1,int c1,int ** blocks,int r2,int c2,int no_of_blocks){
   int value=state_space_value(range,r1,c1,blocks,r2,c2);
   int ** temp_range;
+  int ** last_range;
   allocate_memory(&temp_range,r1,c1);
+  allocate_memory(&last_range,r1,c1);
+  int *arr;
+  arr=(int*) malloc(r1*sizeof(int));
+  for(int i=0;i<r1;i++)
+  arr[i]=i;
+  shuffle(arr,r1);
   copy(temp_range,range,r1,c1);
   int uphill=0;
-  int no_of_iterations=100;
-  while(uphill!=1 && no_of_iterations!=0){
-    for(int i=0;i<r1/2;i++){
-      int j=rand()%r1;
+    for(int j=0;j<r1;j++){
+      copy(last_range,range,r1,c1);
+      int i=arr[j];
       int x=rand()%2;
       if(x==0){
         range[i][2]=-1;
@@ -162,32 +182,41 @@ void find_successor(int ** range,int r1,int c1,int ** blocks,int r2,int c2,int n
         x=rand()%2;
         if(x==0)
         {
+          if(range[i][2]==-1){
+            range[i][2]=range[i][0];
+          }
+          else{
           range[i][2]=range[i][2]+1;
           if(range[i][2]>range[i][1])
           {
             range[i][2]=range[i][0];
           }
         }
+        }
         else{
+          if(range[i][2]==-1){
+            range[i][2]=range[i][1];
+          }
+          else{
           range[i][2]=range[i][2]-1;
           if(range[i][2]<range[i][0])
           range[i][2]=range[i][1];
         }
+        }
       }
+      if(is_valid_state_space(range,r1,c1,blocks,r2,no_of_blocks)==1){
+        int currentvalue=state_space_value(range,r1,c1,blocks,r2,c2);
+        if(currentvalue>value){
+          copy(temp_range,range,r1,c1);
+          value=currentvalue;
+        }
+      }
+      copy(range,last_range,r1,c1);
+    }
 
-    }
-    if(is_valid_state_space(range,r1,c1,blocks,r2,no_of_blocks)==1){
-      int currentvalue=state_space_value(range,r1,c1,blocks,r2,c2);
-      if(currentvalue>value){
-        return;
-      }
-    }
     copy(range,temp_range,r1,c1);
-    no_of_iterations--;
+
   }
-
-}
-
 //function to start hill Climbing
 void start_hill_climbing(int** range,int r1,int c1,int** blocks,int r2,int no_of_blocks){
   for(int j=0;j<r1;j++){
@@ -243,20 +272,22 @@ void hill_climbing(int ** range,int r1,int c1,int ** blocks,int r2,int c2,int no
   int i=0,j=0;
 
   //Performing hill climbing
-  for(j=0;j<100;j++){
+  for(j=0;j<1000;j++){
 
     //randomly initializing state space
     start_hill_climbing(range,r1,c1,blocks,r2,no_of_blocks);
-
-    for(i=0;i<100;i++){
+    int last=0;
+    for(i=0;i<r1;i++){
       int currentvalue=0;
       currentvalue=state_space_value(range,r1,c1,blocks,r2,c2);
       if(max_value<currentvalue)
       {
         max_value=currentvalue;
         copy(max_state_space,range,r1,c1);
+        last=i;
       }
-
+      if(i-last>2)
+      break;
       find_successor(range,r1,c1,blocks,r2,c2,no_of_blocks);
     }
   }
