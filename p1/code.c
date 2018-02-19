@@ -2,8 +2,8 @@
 #include<stdlib.h>
 #include<unistd.h>
 #include<time.h>
-
-
+#include<bits/stdc++.h>
+using namespace std;
 ////////////////////////////////////////////////////////////////////////////////
 //Utility functions
 
@@ -32,7 +32,7 @@ void print_array_second(int **a,int p){
 }
 
 // Allocate memory to any array
-void allocate_memory(int*** x,int rows,int cols){
+void allocate_memory(int *** x,int rows,int cols){
   *x = (int**)malloc(rows * sizeof(int*));
   int i;
  for (i=0; i<rows; i++)
@@ -41,9 +41,20 @@ void allocate_memory(int*** x,int rows,int cols){
  }
 
 }
+void deallocate_memory(int*** x,int rows,int cols){
+  for(int i=0; i<rows;i++)
+    {
+        free((*x)[i]);
+    }
+
+    free(*x);
+}
+//Special memory allocation function for block
 void allocate_memory_second(int*** x,int rows){
   *x=(int**)malloc(rows * sizeof(int*));
 }
+
+//copies one array to another
 void copy(int ** a,int ** b,int r1,int c1){
   int i,j;
   for(i=0;i<r1;i++){
@@ -52,6 +63,17 @@ void copy(int ** a,int ** b,int r1,int c1){
     }
   }
 }
+
+//
+void copy_second(int ** a,int ** b,int r1,int c1){
+  int i;
+  for(i=0;i<r1;i++){
+    a[i][2]=b[i][2];
+    //if(i==0)
+    //printf("values %d %d\n",a[i][c1-1],b[i][c1-1]);
+  }
+}
+//checks if in block how many entries have no block in common and print them
 void check_independency(int ** block,int r1,int no_of_blocks){
 int i,j,k,l;
   for(i=0;i<r1;i++){
@@ -82,6 +104,26 @@ int i,j,k,l;
     }
   }
 }
+/* Arrange the N elements of ARRAY in random order.
+   Only effective if N is much smaller than RAND_MAX;
+   if this may not be the case, use a better random
+   number generator. */
+
+//reference for this function :https://stackoverflow.com/questions/6127503/shuffle-array-in-c
+void shuffle(int *array, size_t n)
+{
+    if (n > 1)
+    {
+        size_t i;
+        for (i = 0; i < n - 1; i++)
+        {
+          size_t j = i + rand() / (RAND_MAX / (n - i) + 1);
+          int t = array[j];
+          array[j] = array[i];
+          array[i] = t;
+        }
+    }
+}
 ///////////////////////////////////////////////////////////////////////////////
 //Restart Hill Climbing functions
 //
@@ -94,11 +136,13 @@ int i,j,k,l;
 
 
 ///////////////////////////////////////////////////////////////////
-//function definition
+//function definitions
+//calculate state space value
 int state_space_value(int ** range,int r1,int c1,int ** blocks,int r2,int c2){
   int sum=0;
   for(int i=0;i<r1;i++){
     if(range[i][2]!=-1){
+      //range[i][2] is the no at which a particular bid blocks are located
       sum+=blocks[range[i][2]][2];
     }
   }
@@ -107,14 +151,15 @@ return sum;
 
 
 
-
+//Checks if state space is valid or note
+//returns 0 if not and 1 if it is valid
 int is_valid_state_space(int ** range,int r1,int c1,int ** block,int r2,int no_of_blocks){
-  //printf("printing \n");
- //print_array(state_space,r1,c1);
 
   int i,j;
   int track=0;
+  //array for tracking which blocks have been allocated
   int allocated[no_of_blocks];
+
   for(i=0;i<no_of_blocks;i++)
   allocated[i]=0;
 
@@ -129,10 +174,8 @@ int is_valid_state_space(int ** range,int r1,int c1,int ** block,int r2,int no_o
       {
         if(allocated[block[range[i][2]][j]]==1)
         {
-
-    //      printf("returning with 0\n");
-          //exit(1);
-          return 0;
+          //If a block is already allocated and it is again being allocated then invalid state space
+            return 0;
         }
         allocated[block[range[i][2]][j]]=1;
       //  printf("allocated %d\n",block[range[i][2]][j]);
@@ -145,88 +188,134 @@ int is_valid_state_space(int ** range,int r1,int c1,int ** block,int r2,int no_o
 }
 
 void find_successor(int ** range,int r1,int c1,int ** blocks,int r2,int c2,int no_of_blocks){
+  cout<<"function started"<<endl;
   int value=state_space_value(range,r1,c1,blocks,r2,c2);
-  int ** temp_range;
-  allocate_memory(&temp_range,r1,c1);
-  copy(temp_range,range,r1,c1);
+
+  int temp_range[r1][c1];
+  int last_range[r1][c1];
+
+  //copy_array_one(temp_range,range,r1,c1);
+  for(int i=0;i<r1;i++){
+    temp_range[i][2]=range[i][2];
+  }
   int uphill=0;
+  //Maximum iterations allowed
   int no_of_iterations=100;
-  while(uphill!=1 && no_of_iterations!=0){
-    for(int i=0;i<r1/2;i++){
-      int j=rand()%r1;
-      int x=rand()%2;
-      if(x==0){
-        range[i][2]=-1;
-      }
-      else{
-        x=rand()%2;
-        if(x==0)
-        {
-          range[i][2]=range[i][2]+1;
-          if(range[i][2]>range[i][1])
-          {
-            range[i][2]=range[i][0];
-          }
-        }
-        else{
-          range[i][2]=range[i][2]-1;
-          if(range[i][2]<range[i][0])
-          range[i][2]=range[i][1];
-        }
+  int arr[r1];
+  //arr=(int*) malloc(r1*sizeof(int));
+  for(int i=0;i<r1;i++)
+  arr[i]=i;
+  shuffle(arr,r1);
+  cout<<"reached at shuffle"<<endl;
+  //while(uphill!=1 && no_of_iterations!=0){
+    for(int i=0;i<r1;i++){
+      int x;
+      for(int j=0;j<r1;i++){
+        last_range[j][2]=range[j][2];
       }
 
-    }
-    if(is_valid_state_space(range,r1,c1,blocks,r2,no_of_blocks)==1){
-      int currentvalue=state_space_value(range,r1,c1,blocks,r2,c2);
-      if(currentvalue>value){
-        return;
+      //copy_second(last_range,range,r1,c1);
+      for(x=0;x<3;x++){
+      if(x==0){
+        range[arr[i]][2]=-1;
       }
+      else if(x==1){
+          if(range[arr[i]][2]==-1)
+          {
+            range[arr[i]][2]=range[arr[i]][0];
+          }
+          else{
+          range[arr[i]][2]=range[arr[i]][2]+1;
+          if(range[arr[i]][2]>range[arr[i]][1])
+          {
+            range[arr[i]][2]=range[arr[i]][0];
+          }
+        }
+        }
+        else{
+          if(range[arr[i]][2]==-1){
+            range[arr[i]][2]=range[arr[i]][0];
+          }
+          else{
+          range[arr[i]][2]=range[arr[i]][2]-1;
+          if(range[arr[i]][2]<range[arr[i]][0])
+          range[arr[i]][2]=range[arr[i]][1];
+        }
+        }
+        if(is_valid_state_space(range,r1,c1,blocks,r2,no_of_blocks)==1){
+          int currentvalue=state_space_value(range,r1,c1,blocks,r2,c2);
+          if(currentvalue>value){
+            value=currentvalue;
+            for(int j=0;j<r1;i++){
+              temp_range[j][2]=range[j][2];
+            }
+
+            //copy_second(temp_range,range,r1,c1);
+          }
+
+      }
+      for(int j=0;j<r1;i++){
+        range[j][2]=last_range[j][2];
+      }
+
+      //copy_second(range,last_range,r1,c1);
     }
-    copy(range,temp_range,r1,c1);
-    no_of_iterations--;
-  }
+    cout<<"close to discovering error "<<i<<endl;
+
+    }
+    for(int i=0;i<r1;i++){
+      range[i][2]=temp_range[i][2];
+    }
+
+    //copy_second(range,temp_range,r1,c1);
+    printf("no error here 2\n");
+    //deallocate_memory(&temp_range,r1,c1);
+    //deallocate_memory(&last_range,r1,c1);
+//  }
 
 }
 
 //function to start hill Climbing
+//Or initialize state space with random values
 void start_hill_climbing(int** range,int r1,int c1,int** blocks,int r2,int no_of_blocks){
+//Removing everything from state space
   for(int j=0;j<r1;j++){
     range[j][2]=-1;
   }
+  int *arr;
+  arr=(int*)malloc(sizeof(int));
+  for(int i=0;i<r1;i++){
+    arr[i]=i;
+  }
+  shuffle(arr,r1);
   for(int j=0;j<r1;j++){
-    int i=rand()%r1;
-    if(range[i][2]!=-1)
+    if(range[arr[j]][2]!=-1)
       continue;
-    if(range[i][1]-range[i][0]<0)
+    if(range[arr[j]][1]-range[arr[j]][0]<0)
     {
-      range[i][2]=-1;
+      range[arr[j]][2]=-1;
       continue;
     }
     int x=rand()%2;
     if(x==0){
-      range[i][2]=-1;
+      range[arr[j]][2]=-1;
     }
     else{
-    range[i][2]=(rand()%(range[i][1]-range[i][0]+1))+range[i][0];
+    range[arr[j]][2]=(rand()%(range[arr[j]][1]-range[arr[j]][0]+1))+range[arr[j]][0];
   }
-    int count=10;
+  //would try to find a state which would make the range array valid if state space is not valid
+    int count=5;
     while(is_valid_state_space(range,r1,c1,blocks,r2,no_of_blocks)!=1 && count!=0)
     {
-      range[i][2]=(rand()%(range[i][1]-range[i][0]+1))+range[i][0];
+      range[arr[j]][2]=(rand()%(range[arr[j]][1]-range[arr[j]][0]+1))+range[arr[j]][0];
       count--;
     }
     if(count==0){
-      range[i][2]=-1;
+      range[arr[j]][2]=-1;
     }
   }
 
 }
-
-//function to find the best successor from the successor of current node
-//void find_successor(int ** state_space,int r1,int c1,int ** range,int r2,int c2,int ** blocks,int r3,int c3);
-
-//function to find out state space value of any state
-//int state_space_value(int ** state_space,int r1,int c1,int ** range,int r2,int c2,int ** blocks,int r3,int c3);
 
 //function to perform hill Climbing
 void hill_climbing(int ** range,int r1,int c1,int ** blocks,int r2,int c2,int no_of_blocks){
@@ -241,24 +330,32 @@ void hill_climbing(int ** range,int r1,int c1,int ** blocks,int r2,int c2,int no
   copy(max_state_space,range,r1,c1);
 
   int i=0,j=0;
-
+  int last=0;
   //Performing hill climbing
-  for(j=0;j<100;j++){
+  for(j=0;j<r1;j++){
 
     //randomly initializing state space
     start_hill_climbing(range,r1,c1,blocks,r2,no_of_blocks);
 
+    last=0;
     for(i=0;i<100;i++){
       int currentvalue=0;
       currentvalue=state_space_value(range,r1,c1,blocks,r2,c2);
+
       if(max_value<currentvalue)
       {
         max_value=currentvalue;
         copy(max_state_space,range,r1,c1);
+        last=i;
       }
-
+      if(last-i>20)
+      break;
+      cout<<"reaching here "<<endl;
       find_successor(range,r1,c1,blocks,r2,c2,no_of_blocks);
+
     }
+
+
   }
   printf("max value found %d for the state space \n State space : \n",max_value);
   print_array(max_state_space,r1,c1);
@@ -300,6 +397,7 @@ int main(int argc,char* argv[]){
   for(;i<C;i++){
     int j;
     fscanf(in,"%d %d",&cid[i][0],&cid[i][1]);
+    //printf("check %d %d %d",cid[i][0],cid[i][1],C);
     range[i][0]=l;
     range[i][1]=l+cid[i][1]-1;
     range[i][2]=-1;
@@ -324,7 +422,7 @@ int main(int argc,char* argv[]){
 
     if(j!=cid[i][1])
     {
-      printf("exiting");
+      printf("exiting because j!=cid[i][1] for i %d and cid[i][1] %d",i,cid[i][1]);
       exit(1);
     }
   }
@@ -334,6 +432,7 @@ printf("printing second\n");
 //print_array(range,C,3);
 hill_climbing(range,C,3,blocks,B,N,N);
 //printf("Line \n");
+//exit(1);
 //print_array(range,C,3);
 //printf("printing %d",is_valid_state_space(state_space,C,max+1,blocks,B,N));
 
