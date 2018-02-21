@@ -73,7 +73,7 @@ class ReflexAgent(Agent):
         newGhostStates = successorGameState.getGhostStates()
         newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
 
-        print newScaredTimes
+        #print newScaredTimes
 
         "*** YOUR CODE HERE ***"
         foodList=newFood.asList()
@@ -84,11 +84,11 @@ class ReflexAgent(Agent):
         #Return  high negative if ghost is very close.
         for ghoststate in newGhostStates:
             if manhattandist(ghoststate.getPosition(),newPos)<=1:
-                return -9999999
+                return -999999999
     
         #To prevent pacman from making no move at all
         if currentGameState.getPacmanPosition() == newPos:
-            return -9999999
+            return -999999999
         
         #Sum of manhattan distance of all food
         for i in foodList:
@@ -96,9 +96,9 @@ class ReflexAgent(Agent):
         
         #If all foods are taken we return very high utility.
         if len(foodList)!=0:
-            final=3500/sum + 25000/len(foodList)
+            final=3400/sum + 24000/len(foodList)
         else:
-            return 99999999
+            return 999999999
 
         return final
 
@@ -239,32 +239,31 @@ class MinimaxAgent(MultiAgentSearchAgent):
 class AlphaBetaAgent(MultiAgentSearchAgent):
 
 
+
     def getAction(self, gameState):
     
       no_of_agents=gameState.getNumAgents()
           #Number of ghosts
       no_of_ghost = no_of_agents-1
 
-      ans = self.alphabeta(gameState,self.depth,no_of_ghost, -999999,999999)
+      ans = self.alphabeta(gameState,self.depth,no_of_ghost, -99999999,99999999)
       return ans
 
     
     
-    def alphabeta(self,state,depth,ghost,alpha,beta):
-
-      legalMoves=state.getLegalActions(0)
-      arr = []
-      v = -99999999
-
-      for action in legalMoves:
-        x= self.mini(state.generateSuccessor(0, action),depth,ghost,1 , alpha , beta)
-
-        if x>=v:
-            v=x
-            ans=action
-        if v<beta:
-            alpha=max(alpha,v)
+    def alphabeta(self,state,d,a,alpha,beta):
+        legalMoves=state.getLegalActions(0)
+        v=-9999999999
+        for action in legalMoves:
+            x=self.mini(state.generateSuccessor(0, action),d,a,1,alpha,beta)
+            
+            if x>=v:
+                v=x
+                ans=action
+            if v<beta:
+                alpha=max(alpha,v)
         return ans
+
 
 
     def mini(self,state,depth,ghost,b,alpha,beta):
@@ -279,23 +278,23 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         v=999999999
             
         for action in legalMoves:
-          v=min(v,self.maxi(state.generateSuccessor(b, action),d-1,b,alpha,beta))
+          v=min(v,self.maxi(state.generateSuccessor(b, action),depth-1,b,alpha,beta))
 
           if v>=alpha:
             beta=min(beta,v)
           else: return v
 
-          return v
+        return v
 
-        else:
+      else:
             legalMoves=state.getLegalActions(b)
             if(legalMoves==[]):
               return self.evaluationFunction(state)
 
             #Return min value among successors while it is in the expected range (alpha,beta)
-            v=9999999999
+            v=999999999
             for action in legalMoves:
-                v=min(v,self.mini(state.generateSuccessor(b, action),d,a-1,b+1,alpha,beta))
+                v=min(v,self.mini(state.generateSuccessor(b, action),depth,ghost-1,b+1,alpha,beta))
                 if v>=alpha:
                     beta=min(beta,v)
                 else: return v
@@ -317,7 +316,7 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
       
 
         for action in legalMoves:
-          v=max(v,self.mini(state.generateSuccessor(0, action),d,a,1,alpha,beta))
+          v=max(v,self.mini(state.generateSuccessor(0, action),depth,ghost,1,alpha,beta))
           if v<=beta:
               alpha=max(alpha,v)
           else: return v
@@ -326,12 +325,7 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         
     
 
-    def getAction(self, gameState):
-        """
-          Returns the minimax action using self.depth and self.evaluationFunction
-        """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+   
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
     """
@@ -416,8 +410,45 @@ def betterEvaluationFunction(currentGameState):
       DESCRIPTION: <write something here so we know what you did>
     """
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    "*** YOUR CODE HERE ***"
+    
+    newPos = currentGameState.getPacmanPosition()
+    newFood = currentGameState.getFood()
+    newGhostStates = currentGameState.getGhostStates()
+    newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
+    
+    "*** YOUR CODE HERE ***"
+    
 
-# Abbreviation
+    #List of coordinates of all food particles
+    food=newFood.asList()
+    #sum of manhattan distance of all food particles
+    sum=0
+    
+    
+    #Gives a very negative utility if ghost is too close to pacman
+    for g in newGhostStates:
+        if manhattandist(g.getPosition(),newPos)<=2:
+            return -9999999
+        
+
+    #Stores manhattan distance to ghost if the ghost is in scared state
+    x=0
+    if newScaredTimes>0:
+      x=manhattandist(g.getPosition(),newPos)
+
+    #sum of manhattan distance of all food particles
+    for i in food:
+      sum=sum+manhattandist(i,newPos)
+
+    #Returns a very high utility if all food have been consumed
+    if len(food)==0:
+      return 999999999
+
+    
+    
+    final=3400/sum + 26000/len(food) + 3500/x
+
+    return final
 better = betterEvaluationFunction
 
