@@ -163,17 +163,23 @@ class MinimaxAgent(MultiAgentSearchAgent):
         no_of_agents=gameState.getNumAgents()
         #Number of ghosts
         no_of_ghost = no_of_agents-1
+
         ans = self.minmax(gameState,self.depth,no_of_ghost)
+
         return ans
     
     def minmax(self,state,depth,ghost):
 
         legalMoves=state.getLegalActions(0)
+        arr = []
 
-        arr=[self.mini(state.generateSuccessor(0, action),depth,ghost,1) for action in legalMoves]
+        for action in legalMoves:
+          arr.append(self.mini(state.generateSuccessor(0, action),depth,ghost,1))
+
         m=max(arr)
 
         bestIndices = []
+
         for index in range(len(arr)): 
           if arr[index] == m:
             bestIndices.append(index)
@@ -183,18 +189,28 @@ class MinimaxAgent(MultiAgentSearchAgent):
 
 
     def mini(self,state,depth,ghost,b):
+
         #Go to max agent if all min agents have been evaluated once.
         if(ghost==1):
             legalMoves=state.getLegalActions(b)
-            arr=[self.maxi(state.generateSuccessor(b, action),depth-1,b) for action in legalMoves]
+            arr = []
+
+            for action in legalMoves:
+              arr.append(self.maxi(state.generateSuccessor(b, action),depth-1,b))
+           
             #If no successors return evaluation value
             if(arr==[]):
                 return self.evaluationFunction(state)
             #Return min of all utility values of its successors
             return min(arr)
+
         else:
             legalMoves=state.getLegalActions(b)
-            arr=[self.mini(state.generateSuccessor(b, action),depth,ghost-1,b+1) for action in legalMoves]
+            arr = []
+
+            for action in legalMoves:
+              arr.append(self.mini(state.generateSuccessor(b, action),depth,ghost-1,b+1)) 
+
             #If no successors return evaluation value
             if(arr==[]):
                 return self.evaluationFunction(state)
@@ -208,8 +224,11 @@ class MinimaxAgent(MultiAgentSearchAgent):
             return self.evaluationFunction(state)
 
         legalMoves=state.getLegalActions(0)
+        arr=[]
 
-        arr=[self.mini(state.generateSuccessor(0, action),depth,ghost,1) for action in legalMoves]
+        for action in legalMoves:
+          arr.append(self.mini(state.generateSuccessor(0, action),depth,ghost,1))
+
         #If no successors return evaluation value
         if(arr==[]):
             return self.evaluationFunction(state)
@@ -242,7 +261,67 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
           legal moves.
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        no_of_agents=gameState.getNumAgents()
+        #Number of ghosts
+        no_of_ghost = no_of_agents-1
+        ans = self.minmax(gameState,self.depth,no_of_ghost)
+        return ans
+    
+    def minmax(self,state,depth,ghost):
+
+        legalMoves=state.getLegalActions(0)
+
+        arr=[self.mini(state.generateSuccessor(0, action),depth,ghost,1) for action in legalMoves]
+        m=max(arr)
+
+        bestIndices = []
+        for index in range(len(arr)): 
+          if arr[index] == m:
+            bestIndices.append(index)
+
+        chosenIndex = random.choice(bestIndices) # Pick randomly among the best
+        return legalMoves[chosenIndex]
+
+
+    def mini(self,state,depth,ghost,b):
+        #Go to max agent if all min agents have been evaluated once.
+        if(ghost==1):
+            legalMoves=state.getLegalActions(b)
+            arr=[self.maxi(state.generateSuccessor(b, action),depth-1,b) for action in legalMoves]
+            #If no successors return evaluation value
+            if(arr==[]):
+                return self.evaluationFunction(state)
+            sum=0.0
+            #Return average value of successors as all equally likely(as ghosts play random moves).
+            for x in arr:
+                sum+=x
+            return float(float(sum)/float(len(arr)))
+        else:
+            legalMoves=state.getLegalActions(b)
+            arr=[self.mini(state.generateSuccessor(b, action),depth,ghost-1,b+1) for action in legalMoves]
+            #If no successors return evaluation value
+            if(arr==[]):
+                return self.evaluationFunction(state)
+            sum=0.0
+            #Return average value of successors as all equally likely(as ghosts play random moves).
+            for x in arr:
+                sum+=x
+            return float(float(sum)/float(len(arr)))
+
+
+    def maxi(self,state,depth,ghost):
+        #If given depth has been reached then return evaluation value
+        if(depth==0):
+            return self.evaluationFunction(state)
+
+        legalMoves=state.getLegalActions(0)
+
+        arr=[self.mini(state.generateSuccessor(0, action),depth,ghost,1) for action in legalMoves]
+        #If no successors return evaluation value
+        if(arr==[]):
+            return self.evaluationFunction(state)
+        #Return max of all utility values of its successors
+        return max(arr)
 
 def betterEvaluationFunction(currentGameState):
     """
