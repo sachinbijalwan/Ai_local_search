@@ -237,9 +237,94 @@ class MinimaxAgent(MultiAgentSearchAgent):
     
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
-    """
-      Your minimax agent with alpha-beta pruning (question 3)
-    """
+
+
+    def getAction(self, gameState):
+    
+      no_of_agents=gameState.getNumAgents()
+          #Number of ghosts
+      no_of_ghost = no_of_agents-1
+
+      ans = self.alphabeta(gameState,self.depth,no_of_ghost, -999999,999999)
+      return ans
+
+    
+    
+    def alphabeta(self,state,depth,ghost,alpha,beta):
+
+      legalMoves=state.getLegalActions(0)
+      arr = []
+      v = -99999999
+
+      for action in legalMoves:
+        x= self.mini(state.generateSuccessor(0, action),depth,ghost,1 , alpha , beta)
+
+        if x>=v:
+            v=x
+            ans=action
+        if v<beta:
+            alpha=max(alpha,v)
+        return ans
+
+
+    def mini(self,state,depth,ghost,b,alpha,beta):
+
+        #Go to max agent if all min agents have been evaluated once.
+      if(ghost==1):
+        legalMoves=state.getLegalActions(b)
+
+        if(legalMoves==[]):
+            return self.evaluationFunction(state)
+
+        v=999999999
+            
+        for action in legalMoves:
+          v=min(v,self.maxi(state.generateSuccessor(b, action),d-1,b,alpha,beta))
+
+          if v>=alpha:
+            beta=min(beta,v)
+          else: return v
+
+          return v
+
+        else:
+            legalMoves=state.getLegalActions(b)
+            if(legalMoves==[]):
+              return self.evaluationFunction(state)
+
+            #Return min value among successors while it is in the expected range (alpha,beta)
+            v=9999999999
+            for action in legalMoves:
+                v=min(v,self.mini(state.generateSuccessor(b, action),d,a-1,b+1,alpha,beta))
+                if v>=alpha:
+                    beta=min(beta,v)
+                else: return v
+            return v
+
+
+    def maxi(self,state,depth,ghost,alpha , beta):
+        #If given depth has been reached then return evaluation value
+        if(depth==0):
+            return self.evaluationFunction(state)
+
+        legalMoves=state.getLegalActions(0)
+
+        #If no successors return evaluation value
+        if(legalMoves==[]):
+            return self.evaluationFunction(state)
+
+        v = -999999999
+      
+
+        for action in legalMoves:
+          v=max(v,self.mini(state.generateSuccessor(0, action),d,a,1,alpha,beta))
+          if v<=beta:
+              alpha=max(alpha,v)
+          else: return v
+        return v
+        
+        
+    
 
     def getAction(self, gameState):
         """
