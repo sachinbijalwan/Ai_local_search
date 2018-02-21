@@ -73,8 +73,38 @@ class ReflexAgent(Agent):
         newGhostStates = successorGameState.getGhostStates()
         newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
 
+        print newScaredTimes
+
         "*** YOUR CODE HERE ***"
-        return successorGameState.getScore()
+        foodList=newFood.asList()
+        
+        #Sum of manhattan distance of all food
+        sum=0
+        
+        #Return  high negative if ghost is very close.
+        for ghoststate in newGhostStates:
+            if manhattandist(ghoststate.getPosition(),newPos)<=1:
+                return -9999999
+    
+        #To prevent pacman from making no move at all
+        if currentGameState.getPacmanPosition() == newPos:
+            return -9999999
+        
+        #Sum of manhattan distance of all food
+        for i in foodList:
+            sum+=manhattandist(i,newPos)
+        
+        #If all foods are taken we return very high utility.
+        if len(foodList)!=0:
+            final=3500/sum + 25000/len(foodList)
+        else:
+            return 99999999
+
+        return final
+
+def manhattandist(xy1, xy2):
+    return abs(xy1[0] - xy2[0]) + abs(xy1[1] - xy2[1])
+
 
 def scoreEvaluationFunction(currentGameState):
     """
@@ -129,7 +159,63 @@ class MinimaxAgent(MultiAgentSearchAgent):
             Returns the total number of agents in the game
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+
+        no_of_agents=gameState.getNumAgents()
+        #Number of ghosts
+        no_of_ghost = no_of_agents-1
+        ans = self.minmax(gameState,self.depth,no_of_ghost)
+        return ans
+    
+    def minmax(self,state,depth,ghost):
+
+        legalMoves=state.getLegalActions(0)
+
+        arr=[self.mini(state.generateSuccessor(0, action),depth,ghost,1) for action in legalMoves]
+        m=max(arr)
+
+        bestIndices = []
+        for index in range(len(arr)): 
+          if arr[index] == m:
+            bestIndices.append(index)
+
+        chosenIndex = random.choice(bestIndices) # Pick randomly among the best
+        return legalMoves[chosenIndex]
+
+
+    def mini(self,state,depth,ghost,b):
+        #Go to max agent if all min agents have been evaluated once.
+        if(ghost==1):
+            legalMoves=state.getLegalActions(b)
+            arr=[self.maxi(state.generateSuccessor(b, action),depth-1,b) for action in legalMoves]
+            #If no successors return evaluation value
+            if(arr==[]):
+                return self.evaluationFunction(state)
+            #Return min of all utility values of its successors
+            return min(arr)
+        else:
+            legalMoves=state.getLegalActions(b)
+            arr=[self.mini(state.generateSuccessor(b, action),depth,ghost-1,b+1) for action in legalMoves]
+            #If no successors return evaluation value
+            if(arr==[]):
+                return self.evaluationFunction(state)
+            #Return min of all utility values of its successors
+            return min(arr)
+
+
+    def maxi(self,state,depth,ghost):
+        #If given depth has been reached then return evaluation value
+        if(depth==0):
+            return self.evaluationFunction(state)
+
+        legalMoves=state.getLegalActions(0)
+
+        arr=[self.mini(state.generateSuccessor(0, action),depth,ghost,1) for action in legalMoves]
+        #If no successors return evaluation value
+        if(arr==[]):
+            return self.evaluationFunction(state)
+        #Return max of all utility values of its successors
+        return max(arr)
+    
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """
