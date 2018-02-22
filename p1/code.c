@@ -52,6 +52,8 @@ void deallocate_memory(int*** x,int rows){
 }
 free(*x);
 }
+
+
 void copy(int ** a,int ** b,int r1,int c1){
   int i,j;
   for(i=0;i<r1;i++){
@@ -91,6 +93,8 @@ int i,j,k,l;
   }
 
 }
+
+//shuffle function picked up from stackoverflow.com
 void shuffle(int *array, size_t n)
 {
     if (n > 1)
@@ -105,7 +109,8 @@ void shuffle(int *array, size_t n)
         }
     }
 }
-void print_array_to_file(int **range,int r1,int c1,int value,char *name){
+void print_array_to_file(int **range,int r1,int c1,int value,char *name,int ** cid){
+    float start=time(NULL);
   FILE *f = fopen(name, "w");
 
   if (f == NULL)
@@ -117,25 +122,20 @@ void print_array_to_file(int **range,int r1,int c1,int value,char *name){
   for(int i=0;i<r1;i++){
       if(range[i][2]!=-1){
         int x=range[i][2];
-        //printf("%d\n",x);
         fprintf(f,"%d ",range[i][2]);
 
       }
   }
+  float end=time(NULL);
+  //printf(" time difference is %f",end-start);
 }
 ///////////////////////////////////////////////////////////////////////////////
 //Restart Hill Climbing functions
 //
 //////////////////////////////////////////////////////////////////////////////
-//Prototyping
-//int is_valid_state_space(int **,int,int,int **,int,int);
-//void start_hill_climbing(int **,int,int,int**,int,int);
-//void hill_climbing(int **,int,int,int **,int,int,int **,int,int,int);
-
-
-
-///////////////////////////////////////////////////////////////////
 //function definition
+
+//function to find out state space value of any state
 int state_space_value(int ** range,int r1,int c1,int ** blocks,int r2,int c2){
   int sum=0;
   for(int i=0;i<r1;i++){
@@ -143,8 +143,6 @@ int state_space_value(int ** range,int r1,int c1,int ** blocks,int r2,int c2){
       sum+=blocks[range[i][2]][2];
     }
   }
-  //deallocate_memory(&range,r1);
-  //deallocate_memory(&blocks,r1);
 return sum;
 }
 
@@ -152,9 +150,6 @@ return sum;
 
 
 int is_valid_state_space(int ** range,int r1,int c1,int ** block,int r2,int no_of_blocks){
-  //printf("printing \n");
- //print_array(state_space,r1,c1);
-
   int i,j;
   int track=0;
   int allocated[no_of_blocks];
@@ -173,25 +168,16 @@ int is_valid_state_space(int ** range,int r1,int c1,int ** block,int r2,int no_o
         if(allocated[block[range[i][2]][j]]==1)
         {
 
-    //      printf("returning with 0\n");
-          //exit(1);
-          //deallocate_memory(&range,r1);
-        //deallocate_memory(&block,r2);
-
           return 0;
         }
         allocated[block[range[i][2]][j]]=1;
-      //  printf("allocated %d\n",block[range[i][2]][j]);
-      //block[track+pos-1][] denotes the position at which our collection of blocks is stored
       }
     }
   }
- // deallocate_memory(&range,r1);
-  //deallocate_memory(&block,r2);
-  //printf("returning with 1\n");
   return 1;
 }
 
+//function to find the best successor from the successor of current node
 void find_successor(int ** range,int r1,int c1,int ** blocks,int r2,int c2,int no_of_blocks){
   int value=state_space_value(range,r1,c1,blocks,r2,c2);
   int ** temp_range;
@@ -252,9 +238,6 @@ void find_successor(int ** range,int r1,int c1,int ** blocks,int r2,int c2,int n
     deallocate_memory(&temp_range,r1);
     deallocate_memory(&last_range,r1);
     free(arr);
-   // deallocate_memory(&range,r1);
-    //deallocate_memory(&blocks,r2);
-
   }
 //function to start hill Climbing
 void start_hill_climbing(int** range,int r1,int c1,int** blocks,int r2,int no_of_blocks){
@@ -289,23 +272,18 @@ void start_hill_climbing(int** range,int r1,int c1,int** blocks,int r2,int no_of
   }
 
 }
-
-//function to find the best successor from the successor of current node
-//void find_successor(int ** state_space,int r1,int c1,int ** range,int r2,int c2,int ** blocks,int r3,int c3);
-
-//function to find out state space value of any state
-//int state_space_value(int ** state_space,int r1,int c1,int ** range,int r2,int c2,int ** blocks,int r3,int c3);
-
 //function to perform hill Climbing
-void hill_climbing(int ** range,int r1,int c1,int ** blocks,int r2,int c2,int no_of_blocks,time_t start,time_t seconds,char* name){
+void hill_climbing(int ** range,int r1,int c1,int ** blocks,int r2,int c2,int no_of_blocks,time_t start,time_t seconds,char* name,int ** cid){
   int** max_state_space;
   int** maxstatespaceforloop;
   start=time(NULL);
   time_t end;
-  //seconds=3;
   end=start+seconds;
+  time_t intermediate;
+  intermediate=start;
   allocate_memory(&max_state_space,r1,c1);
   allocate_memory(&maxstatespaceforloop,r1,c1);
+  int changed=0;
   int max_value=0;
   int value=0;
 
@@ -320,12 +298,15 @@ void hill_climbing(int ** range,int r1,int c1,int ** blocks,int r2,int c2,int no
 
     //randomly initializing state space
     start_hill_climbing(range,r1,c1,blocks,r2,no_of_blocks);
-    //printf("initial state\n");
-    //print_array(range,r1,c1);
     int last=0;
     int maxvalueforloop=0;
     for(i=0;i<2*r1 && start<end;i++){
       start=time(NULL);
+      if(start-intermediate>58 && changed==1){
+        intermediate=start;
+        print_array_to_file(max_state_space,r1,c1,max_value,name,cid);
+        changed=0;
+      }
       int currentvalue=0;
       currentvalue=state_space_value(range,r1,c1,blocks,r2,c2);
       if(maxvalueforloop<currentvalue)
@@ -339,30 +320,18 @@ void hill_climbing(int ** range,int r1,int c1,int ** blocks,int r2,int c2,int no
       if(max_value<maxvalueforloop){
         max_value=maxvalueforloop;
         copy(max_state_space,maxstatespaceforloop,r1,c1);
+        changed=1;
       }
       find_successor(range,r1,c1,blocks,r2,c2,no_of_blocks);
 
     }
-  //  printf("Loop time is %s max time is %s",ctime(&start),ctime(&end));
   }
-  print_array_to_file(max_state_space,r1,c1,max_value,name);
+  if(changed==1)
+  {
+      print_array_to_file(max_state_space,r1,c1,max_value,name,cid);
+  }
   deallocate_memory(&maxstatespaceforloop,r1);
   deallocate_memory(&max_state_space,r1);
-
-//  printf("max value found %d for the state space \n State space : \n",max_value);
-//  print_array(max_state_space,r1,c1);
-}
-int max_value(int ** block,int r1,int ** max_val){
-  *max_val=(int*) malloc(sizeof(int)*3);
-  (*max_val)[0]=0;
-  for(int i=0;i<r1;i++){
-    if((*max_val)[0]<block[i][2])
-    {
-      (*max_val)[0]=block[i][2];
-      (*max_val)[1]=block[i][0];
-    }
-  }
-    free(*max_val);
 }
 /////////////////////////////////////////////////////////////////////////////////
 //
@@ -370,6 +339,7 @@ int main(int argc,char* argv[]){
 
   srand(time(NULL));
   time_t start=time(NULL);
+
   // Checking command line arguments
   if(argc < 2)
   {
@@ -392,11 +362,12 @@ int main(int argc,char* argv[]){
   int T,N,B,C;
   fscanf(in, "%d", &T);
   time_t seconds=T*60;
-  seconds=180;
+  //seconds=3;
   fscanf(in,"%d",&N);
   fscanf(in,"%d",&B);
   fscanf(in,"%d",&C);
-  int cid[C][2];
+  int ** cid;
+  allocate_memory(&cid,C,2);
   int i=0;
   int **blocks;
   allocate_memory_second(&blocks,B);
@@ -412,10 +383,8 @@ int main(int argc,char* argv[]){
     range[i][1]=l+cid[i][1]-1;
     range[i][2]=-1;
     for(j=0;j<cid[i][1];j++){
-      //printf("\n j: %d cid[i][1] % d\n",j,cid[i][1]);
       int companyid,no_of_blocks,value;
       fscanf(in,"%d %d %d",&companyid,&no_of_blocks,&value);
-      //printf("\ncompany id %d  no of blocks %d  value %d\n",companyid,no_of_blocks,l);//debug
       int k=0;
 
       blocks[l]=(int *)malloc((no_of_blocks+3)*sizeof(int));
@@ -427,28 +396,15 @@ int main(int argc,char* argv[]){
         }
       l++;
     }
-   //printf("\n\n\nequal j: %d,cid[i][1 :%d\n\n\n",j,cid[i][1]);
 
     if(j!=cid[i][1])
     {
-    //  printf("exiting j %d cid[i][0] %d cid[i][1] %d i %d blocks no %d",j,cid[i][0],cid[i][1],i,blocks[l-1][1]);
       exit(1);
     }
   }
-//check_independency(blocks,B,N);
-//print_array(state_space,C,max+1);
-//printf("printing second\n");
-//print_array(range,C,3);
-hill_climbing(range,C,3,blocks,B,N,N,start,seconds,argv[2]);
+hill_climbing(range,C,3,blocks,B,N,N,start,seconds,argv[2],cid);
 deallocate_memory(&range,C);
 deallocate_memory(&blocks,B);
-//int *max_val;
-//max_value(blocks,B,&max_val);
-//printf("max value %d at %d",max_val[0],max_val[1]);
-//printf("Line \n");
-//print_array(range,C,3);
-//printf("printing %d",is_valid_state_space(state_space,C,max+1,blocks,B,N));
-
   fclose(in);
   return 0;
 }
