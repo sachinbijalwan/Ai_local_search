@@ -50,6 +50,7 @@ void deallocate_memory(int*** x,int rows){
     int* currentIntPtr = (*x)[i];
     free(currentIntPtr);
 }
+free(*x);
 }
 void copy(int ** a,int ** b,int r1,int c1){
   int i,j;
@@ -88,6 +89,7 @@ int i,j,k,l;
 
     }
   }
+
 }
 void shuffle(int *array, size_t n)
 {
@@ -141,6 +143,8 @@ int state_space_value(int ** range,int r1,int c1,int ** blocks,int r2,int c2){
       sum+=blocks[range[i][2]][2];
     }
   }
+  //deallocate_memory(&range,r1);
+  //deallocate_memory(&blocks,r1);
 return sum;
 }
 
@@ -171,6 +175,9 @@ int is_valid_state_space(int ** range,int r1,int c1,int ** block,int r2,int no_o
 
     //      printf("returning with 0\n");
           //exit(1);
+          //deallocate_memory(&range,r1);
+        //deallocate_memory(&block,r2);
+
           return 0;
         }
         allocated[block[range[i][2]][j]]=1;
@@ -179,6 +186,8 @@ int is_valid_state_space(int ** range,int r1,int c1,int ** block,int r2,int no_o
       }
     }
   }
+ // deallocate_memory(&range,r1);
+  //deallocate_memory(&block,r2);
   //printf("returning with 1\n");
   return 1;
 }
@@ -242,6 +251,10 @@ void find_successor(int ** range,int r1,int c1,int ** blocks,int r2,int c2,int n
     copy(range,temp_range,r1,c1);
     deallocate_memory(&temp_range,r1);
     deallocate_memory(&last_range,r1);
+    free(arr);
+   // deallocate_memory(&range,r1);
+    //deallocate_memory(&blocks,r2);
+
   }
 //function to start hill Climbing
 void start_hill_climbing(int** range,int r1,int c1,int** blocks,int r2,int no_of_blocks){
@@ -333,6 +346,9 @@ void hill_climbing(int ** range,int r1,int c1,int ** blocks,int r2,int c2,int no
   //  printf("Loop time is %s max time is %s",ctime(&start),ctime(&end));
   }
   print_array_to_file(max_state_space,r1,c1,max_value,name);
+  deallocate_memory(&maxstatespaceforloop,r1);
+  deallocate_memory(&max_state_space,r1);
+
 //  printf("max value found %d for the state space \n State space : \n",max_value);
 //  print_array(max_state_space,r1,c1);
 }
@@ -346,7 +362,7 @@ int max_value(int ** block,int r1,int ** max_val){
       (*max_val)[1]=block[i][0];
     }
   }
-
+    free(*max_val);
 }
 /////////////////////////////////////////////////////////////////////////////////
 //
@@ -376,6 +392,7 @@ int main(int argc,char* argv[]){
   int T,N,B,C;
   fscanf(in, "%d", &T);
   time_t seconds=T*60;
+  seconds=180;
   fscanf(in,"%d",&N);
   fscanf(in,"%d",&B);
   fscanf(in,"%d",&C);
